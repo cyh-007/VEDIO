@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>模块化视频解析平台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        // Tailwind配置
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#2563EB',
+                        secondary: '#10B981',
+                        accent: '#F59E0B',
+                        hongniu: '#E63946', // 红牛解析专属颜色
+                        dark: '#1E293B',
+                        light: '#F8FAFC'
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .card-hover {
+                @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
+            }
+            .parser-badge {
+                @apply inline-block px-2 py-1 text-xs rounded-full font-medium;
+            }
+        }
+    </style>
+</head>
+<body class="font-inter bg-gray-50 text-dark min-h-screen flex flex-col">
+    <!-- 导航栏 -->
+    <header class="sticky top-0 z-50 bg-white/90 backdrop-blur-sm shadow-sm transition-all duration-300">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <i class="fa fa-play-circle text-primary text-2xl"></i>
+                <h1 class="text-xl font-bold text-primary">视频解析平台</h1>
+            </div>
+            
+            <nav class="hidden md:flex items-center space-x-6">
+                <a href="#" class="font-medium text-primary border-b-2 border-primary pb-1">首页</a>
+                <a href="#features" class="font-medium hover:text-primary transition-colors">功能</a>
+                <a href="#parsers" class="font-medium hover:text-primary transition-colors">解析接口</a>
+                <a href="#guide" class="font-medium hover:text-primary transition-colors">使用指南</a>
+            </nav>
+            
+            <div class="flex items-center space-x-4">
+                <button class="hidden md:block px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+                    帮助中心
+                </button>
+                <button id="mobile-menu-btn" class="md:hidden text-xl">
+                    <i class="fa fa-bars"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 移动端菜单 -->
+    <div id="mobile-menu" class="fixed inset-0 bg-black/50 z-40 hidden">
+        <div class="bg-white h-full w-64 p-5 shadow-lg transform -translate-x-full transition-transform duration-300">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="font-bold text-lg">菜单</h3>
+                <button id="close-mobile-menu" class="text-xl">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+            <nav class="flex flex-col space-y-4">
+                <a href="#" class="font-medium text-primary py-2 border-b border-gray-100">首页</a>
+                <a href="#features" class="font-medium hover:text-primary transition-colors py-2 border-b border-gray-100">功能</a>
+                <a href="#parsers" class="font-medium hover:text-primary transition-colors py-2 border-b border-gray-100">解析接口</a>
+                <a href="#guide" class="font-medium hover:text-primary transition-colors py-2">使用指南</a>
+                <button class="mt-4 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+                    帮助中心
+                </button>
+            </nav>
+        </div>
+    </div>
+
+    <!-- 主内容区 -->
+    <main class="flex-grow">
+        <!-- 解析区域 -->
+        <section class="py-16 bg-gradient-to-br from-primary/5 to-secondary/5">
+            <div class="container mx-auto px-4">
+                <div class="max-w-3xl mx-auto text-center mb-10">
+                    <h2 class="text-[clamp(1.8rem,5vw,3rem)] font-bold mb-4">视频解析播放</h2>
+                    <p class="text-gray-600 text-lg mb-8">支持多种解析接口，轻松播放各类视频链接</p>
+                    
+                    <!-- 解析表单 -->
+                    <div class="bg-white rounded-xl shadow-lg p-6 card-hover">
+                        <form id="parse-form" class="flex flex-col md:flex-row gap-3">
+                            <div class="relative flex-grow">
+                                <i class="fa fa-link absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                                <input 
+                                    type="url" 
+                                    id="video-url" 
+                                    placeholder="请输入视频链接 (MP4/M3U8等格式)" 
+                                    class="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                                
+                                   
+                                >
+                            </div>
+                            
+                            <div class="flex flex-col sm:flex-row gap-2">
+                                <select id="parser-select" class="px-4 py-3 rounded-lg border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all">
+                                    <!-- 解析接口选项将通过JS动态生成 -->
+                                </select>
+                                
+                                <button 
+                                    type="submit" 
+                                    class="px-6 py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-all flex items-center justify-center gap-2 shadow-md"
+                                >
+                                    <i class="fa fa-play"></i>
+                                    <span>解析播放</span>
+                                </button>
+                            </div>
+                        </form>
+                        
+                        <div class="mt-4 text-sm text-gray-500 flex flex-wrap gap-2 justify-center">
+                            <span><i class="fa fa-check-circle text-green-500"></i> 支持MP4、M3U8等格式</span>
+                            <span><i class="fa fa-check-circle text-green-500"></i> 多接口自动切换</span>
+                            <span><i class="fa fa-check-circle text-green-500"></i> 高清流畅播放</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 视频播放区域 -->
+        <section id="player-section" class="py-10 hidden">
+            <div class="container mx-auto px-4">
+                <div class="max-w-5xl mx-auto">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl font-bold">视频播放</h3>
+                        <button id="close-player" class="text-gray-500 hover:text-gray-700 transition-colors">
+                            <i class="fa fa-times"></i> 关闭
+                        </button>
+                    </div>
+                    
+                    <!-- 播放器容器 -->
+                    <div class="bg-dark rounded-xl overflow-hidden shadow-xl aspect-video relative mb-6">
+                        <div id="loading-indicator" class="absolute inset-0 flex items-center justify-center bg-dark/80">
+                            <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-primary border-solid"></div>
+                        </div>
+                        <iframe 
+                            id="video-player" 
+                            class="w-full h-full" 
+                            frameborder="0" 
+                            allowfullscreen
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        ></iframe>
+                    </div>
+                    
+                    <!-- 播放控制 -->
+                    <div class="bg-white rounded-xl shadow-md p-6">
+                        <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
+                            <div>
+                                <h4 id="video-title" class="font-bold text-lg">视频标题</h4>
+                                <p id="video-url-display" class="text-sm text-gray-500 truncate max-w-md mt-1"></p>
+                            </div>
+                            <div class="flex gap-3">
+                                <button id="reparse-btn" class="flex items-center gap-1 px-4 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
+                                    <i class="fa fa-refresh"></i> 重新解析
+                                </button>
+                                <button id="fullscreen-btn" class="flex items-center gap-1 px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors">
+                                    <i class="fa fa-expand"></i> 全屏
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="border-t border-gray-100 pt-4">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-sm text-gray-600 mb-1">解析接口</label>
+                                    <select id="player-parser-select" class="w-full p-2 border border-gray-200 rounded-lg focus:border-primary outline-none">
+                                        <!-- 由JS动态生成 -->
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm text-gray-600 mb-1">播放速度</label>
+                                    <select id="playback-speed" class="w-full p-2 border border-gray-200 rounded-lg focus:border-primary outline-none">
+                                        <option value="0.5">0.5x</option>
+                                        <option value="0.75">0.75x</option>
+                                        <option value="1" selected>1.0x</option>
+                                        <option value="1.25">1.25x</option>
+                                        <option value="1.5">1.5x</option>
+                                        <option value="2">2.0x</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm text-gray-600 mb-1">自动播放</label>
+                                    <div class="flex items-center gap-4">
+                                        <label class="inline-flex items-center gap-1 cursor-pointer">
+                                            <input type="radio" name="autoplay" value="on" checked class="text-primary focus:ring-primary">
+                                            <span>开启</span>
+                                        </label>
+                                        <label class="inline-flex items-center gap-1 cursor-pointer">
+                                            <input type="radio" name="autoplay" value="off" class="text-primary focus:ring-primary">
+                                            <span>关闭</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 功能特点 -->
+        <section id="features" class="py-16 bg-white">
+            <div class="container mx-auto px-4">
+                <div class="text-center max-w-2xl mx-auto mb-16">
+                    <h2 class="text-3xl font-bold mb-4">强大功能，简单操作</h2>
+                    <p class="text-gray-600 text-lg">专注于提供流畅的视频解析播放体验</p>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+                    <div class="bg-gray-50 rounded-xl p-6 shadow-sm card-hover">
+                        <div class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-5">
+                            <i class="fa fa-plug text-primary text-xl"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-3">多接口支持</h3>
+                        <p class="text-gray-600">集成多种解析接口，自动切换保障播放成功率，轻松应对各种视频链接。</p>
+                    </div>
+                    
+                    <div class="bg-gray-50 rounded-xl p-6 shadow-sm card-hover">
+                        <div class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-5">
+                            <i class="fa fa-plus-circle text-primary text-xl"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-3">轻松扩展</h3>
+                        <p class="text-gray-600">模块化设计，添加新解析接口只需简单配置，无需修改核心代码，便于维护升级。</p>
+                    </div>
+                    
+                    <div class="bg-gray-50 rounded-xl p-6 shadow-sm card-hover">
+                        <div class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-5">
+                            <i class="fa fa-desktop text-primary text-xl"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-3">全平台适配</h3>
+                        <p class="text-gray-600">完美支持电脑、平板和手机等设备，随时随地观看视频，体验一致流畅。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 解析接口列表 -->
+        <section id="parsers" class="py-16 bg-gray-50">
+            <div class="container mx-auto px-4">
+                <div class="text-center max-w-2xl mx-auto mb-16">
+                    <h2 class="text-3xl font-bold mb-4">可用解析接口</h2>
+                    <p class="text-gray-600 text-lg">多种解析接口可选，自动切换确保播放成功率</p>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto" id="parser-list">
+                    <!-- 解析接口卡片将通过JS动态生成 -->
+                </div>
+            </div>
+        </section>
+
+        <!-- 使用指南 -->
+        <section id="guide" class="py-16 bg-white">
+            <div class="container mx-auto px-4">
+                <div class="text-center max-w-2xl mx-auto mb-16">
+                    <h2 class="text-3xl font-bold mb-4">使用指南</h2>
+                    <p class="text-gray-600 text-lg">简单几步，轻松解析播放视频</p>
+                </div>
+                
+                <div class="max-w-3xl mx-auto">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+                        <div class="text-center">
+                            <div class="w-16 h-16 bg-primary text-white rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4">1</div>
+                            <h3 class="text-xl font-bold mb-2">输入视频链接</h3>
+                            <p class="text-gray-600">复制您想要播放的视频链接，粘贴到解析框中</p>
+                        </div>
+                        
+                        <div class="text-center">
+                            <div class="w-16 h-16 bg-primary text-white rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4">2</div>
+                            <h3 class="text-xl font-bold mb-2">选择解析接口</h3>
+                            <p class="text-gray-600">从下拉菜单中选择合适的解析接口，或使用默认推荐</p>
+                        </div>
+                        
+                        <div class="text-center">
+                            <div class="w-16 h-16 bg-primary text-white rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4">3</div>
+                            <h3 class="text-xl font-bold mb-2">开始播放</h3>
+                            <p class="text-gray-600">点击解析按钮，等待解析完成后即可开始观看视频</p>
+                        </div>
+                    </div>
+                    
+                    <!-- 添加新接口指南 -->
+                    <div class="bg-gray-50 rounded-xl p-6 shadow-sm">
+                        <h3 class="text-xl font-bold mb-4">如何添加新的解析接口？</h3>
+                        <p class="text-gray-600 mb-4">只需在代码的解析接口配置数组中添加以下格式的对象即可：</p>
+                        <div class="bg-dark text-gray-200 p-4 rounded-lg font-mono text-sm overflow-x-auto mb-4">
+                            {<br>
+                            &nbsp;&nbsp;id: "unique_id",<br>
+                            &nbsp;&nbsp;name: "接口名称",<br>
+                            &nbsp;&nbsp;url: "https://parser-url.com/?param=",<br>
+                            &nbsp;&nbsp;description: "接口描述信息",<br>
+                            &nbsp;&nbsp;status: "stable", // stable, beta, experimental<br>
+                            &nbsp;&nbsp;color: "hex-color-code"<br>
+                            }
+                        </div>
+                        <p class="text-gray-600">添加后系统会自动在接口列表和选择器中显示新接口，无需修改其他代码。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-dark text-white py-12">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-6 md:mb-0">
+                    <div class="flex items-center space-x-2 mb-2">
+                        <i class="fa fa-play-circle text-primary text-xl"></i>
+                        <span class="font-bold text-lg">视频解析平台</span>
+                    </div>
+                    <p class="text-gray-400 text-sm">简单高效的多接口视频解析解决方案</p>
+                </div>
+                
+                <div class="flex flex-col md:flex-row gap-6 md:gap-12">
+                    <div>
+                        <h4 class="font-bold mb-3">快速链接</h4>
+                        <ul class="space-y-2 text-sm text-gray-400">
+                            <li><a href="#" class="hover:text-white transition-colors">首页</a></li>
+                            <li><a href="#features" class="hover:text-white transition-colors">功能</a></li>
+                            <li><a href="#parsers" class="hover:text-white transition-colors">解析接口</a></li>
+                            <li><a href="#guide" class="hover:text-white transition-colors">使用指南</a></li>
+                        </ul>
+                    </div>
+                    
+                    <div>
+                        <h4 class="font-bold mb-3">法律信息</h4>
+                        <ul class="space-y-2 text-sm text-gray-400">
+                            <li><a href="#" class="hover:text-white transition-colors">隐私政策</a></li>
+                            <li><a href="#" class="hover:text-white transition-colors">服务条款</a></li>
+                            <li><a href="#" class="hover:text-white transition-colors">版权声明</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-800 mt-8 pt-8 text-center text-sm text-gray-500">
+                <p>© 2023 视频解析平台 - 仅供学习交流使用</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script>
+        // 解析接口配置 - 在这里添加新的解析接口
+        const PARSERS = [
+            {
+                id: "77fly",
+                name: "七七云解析",
+                url: "https://jx.77flv.cc/?url=",
+                description: "支持M3U8格式和多种视频链接，稳定性好",
+                status: "stable",
+                color: "#E63946" // 红牛专属颜色
+            },
+            {
+                id: "tv",
+                name: "m3u8.tv",
+                url: "https://jx.m3u8.tv/jx/jx.php?url=",
+                description: "网页专用接口，稳定可靠，推荐优先使用",
+                status: "stable",
+                color: "#2563EB"
+            },
+            {
+                id: "ik9",
+                name: "ik9云解析",
+                url: "https://yparse.ik9.cc/index.php?url=",
+                description: "通用APP接口，兼容性好，支持多种格式",
+                status: "stable",
+                color: "#10B981"
+            }
+            // 要添加新接口，只需在这里按照相同格式添加一个新对象
+            // {
+            //     id: "new_parser_id",
+            //     name: "新接口名称",
+            //     url: "新接口的URL",
+            //     description: "接口描述",
+            //     status: "stable",
+            //     color: "#颜色代码"
+            // }
+        ];
+
+        // DOM元素
+        const parserSelect = document.getElementById('parser-select');
+        const playerParserSelect = document.getElementById('player-parser-select');
+        const parserList = document.getElementById('parser-list');
+        const parseForm = document.getElementById('parse-form');
+        const videoUrlInput = document.getElementById('video-url');
+        const playerSection = document.getElementById('player-section');
+        const videoPlayer = document.getElementById('video-player');
+        const videoTitle = document.getElementById('video-title');
+        const videoUrlDisplay = document.getElementById('video-url-display');
+        const closePlayerBtn = document.getElementById('close-player');
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const reparseBtn = document.getElementById('reparse-btn');
+        const fullscreenBtn = document.getElementById('fullscreen-btn');
+        const playbackSpeedSelect = document.getElementById('playback-speed');
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const closeMobileMenuBtn = document.getElementById('close-mobile-menu');
+        const mobileMenu = document.getElementById('mobile-menu');
+
+        // 初始化解析接口选择器和列表
+        function initParsers() {
+            // 清空现有内容
+            parserSelect.innerHTML = '';
+            playerParserSelect.innerHTML = '';
+            parserList.innerHTML = '';
+            
+            // 添加解析接口选项
+            PARSERS.forEach(parser => {
+                // 添加到选择器
+                const option1 = document.createElement('option');
+                option1.value = parser.id;
+                option1.textContent = parser.name;
+                parserSelect.appendChild(option1);
+                
+                const option2 = document.createElement('option');
+                option2.value = parser.id;
+                option2.textContent = parser.name;
+                playerParserSelect.appendChild(option2);
+                
+                // 添加到接口列表
+                const statusClass = parser.status === 'stable' ? 'bg-green-100 text-green-800' :
+                                  parser.status === 'beta' ? 'bg-yellow-100 text-yellow-800' :
+                                  'bg-red-100 text-red-800';
+                                  
+                const statusText = parser.status === 'stable' ? '稳定' :
+                                 parser.status === 'beta' ? '测试' :
+                                 '实验';
+
+                const parserCard = document.createElement('div');
+                parserCard.className = 'bg-white rounded-xl p-6 shadow-sm card-hover';
+                parserCard.innerHTML = `
+                    <div class="flex justify-between items-start mb-4">
+                        <h3 class="text-lg font-bold" style="color: ${parser.color}">${parser.name}</h3>
+                        <span class="parser-badge ${statusClass}">${statusText}</span>
+                    </div>
+                    <p class="text-gray-600 text-sm mb-4">${parser.description}</p>
+                    <div class="text-xs bg-gray-100 p-2 rounded font-mono overflow-x-auto">
+                        ${parser.url}视频地址
+                    </div>
+                    <button class="mt-4 w-full py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors use-parser-btn" data-parser="${parser.id}">
+                        <i class="fa fa-play-circle mr-1"></i> 使用此接口
+                    </button>
+                `;
+                parserList.appendChild(parserCard);
+            });
+            
+            // 添加使用接口按钮事件
+            document.querySelectorAll('.use-parser-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const parserId = this.getAttribute('data-parser');
+                    parserSelect.value = parserId;
+                    playerParserSelect.value = parserId;
+                    
+                    // 如果有视频链接，自动解析
+                    if (videoUrlInput.value.trim()) {
+                        parseAndPlayVideo();
+                    } else {
+                        // 否则滚动到输入区域
+                        videoUrlInput.focus();
+                        window.scrollTo({
+                            top: parseForm.offsetTop - 100,
+                            behavior: 'smooth'
+                        });
+                    }
+                });
+            });
+        }
+
+        // 解析并播放视频
+        function parseAndPlayVideo() {
+            const videoUrl = videoUrlInput.value.trim();
+            const parserId = parserSelect.value;
+            
+            if (!videoUrl || !parserId) return;
+            
+            // 找到选中的解析接口
+            const parser = PARSERS.find(p => p.id === parserId);
+            if (!parser) return;
+            
+            // 显示播放器区域
+            playerSection.classList.remove('hidden');
+            
+            // 更新视频信息
+            videoUrlDisplay.textContent = videoUrl;
+            videoTitle.textContent = `使用 ${parser.name} 解析中...`;
+            
+            // 显示加载指示器
+            loadingIndicator.classList.remove('hidden');
+            
+            // 滚动到播放器
+            playerSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            
+            // 构建播放URL
+            const autoplay = document.querySelector('input[name="autoplay"]:checked').value === 'on';
+            const fullUrl = parser.url + encodeURIComponent(videoUrl) + (autoplay ? '&autoplay=1' : '');
+            
+            // 设置播放器源
+            videoPlayer.src = fullUrl;
+            
+            // 监听加载完成
+            videoPlayer.onload = function() {
+                setTimeout(() => {
+                    loadingIndicator.classList.add('hidden');
+                    videoTitle.textContent = `使用 ${parser.name} 播放中`;
+                }, 1000);
+            };
+            
+            // 错误处理
+            videoPlayer.onerror = function() {
+                loadingIndicator.classList.add('hidden');
+                videoTitle.textContent = `解析失败，请尝试其他接口 (${parser.name})`;
+            };
+        }
+
+        // 事件监听
+        function initEvents() {
+            // 表单提交
+            parseForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                parseAndPlayVideo();
+            });
+            
+            // 关闭播放器
+            closePlayerBtn.addEventListener('click', function() {
+                playerSection.classList.add('hidden');
+                videoPlayer.src = ''; // 停止播放
+            });
+            
+            // 重新解析
+            reparseBtn.addEventListener('click', parseAndPlayVideo);
+            
+            // 全屏按钮
+            fullscreenBtn.addEventListener('click', function() {
+                if (videoPlayer.requestFullscreen) {
+                    videoPlayer.requestFullscreen();
+                } else if (videoPlayer.mozRequestFullScreen) {
+                    videoPlayer.mozRequestFullScreen();
+                } else if (videoPlayer.webkitRequestFullscreen) {
+                    videoPlayer.webkitRequestFullscreen();
+                } else if (videoPlayer.msRequestFullscreen) {
+                    videoPlayer.msRequestFullscreen();
+                }
+            });
+            
+            // 播放速度调整
+            playbackSpeedSelect.addEventListener('change', function() {
+                const speed = parseFloat(this.value);
+                try {
+                    videoPlayer.contentWindow.postMessage({
+                        type: 'setPlaybackSpeed',
+                        speed: speed
+                    }, '*');
+                } catch (e) {
+                    console.log('无法设置播放速度:', e);
+                }
+            });
+            
+            // 切换解析接口
+            playerParserSelect.addEventListener('change', function() {
+                parserSelect.value = this.value;
+                parseAndPlayVideo();
+            });
+            
+            // 移动端菜单
+            mobileMenuBtn.addEventListener('click', function() {
+                mobileMenu.classList.remove('hidden');
+                setTimeout(() => {
+                    mobileMenu.querySelector('div').classList.remove('-translate-x-full');
+                }, 10);
+            });
+            
+            closeMobileMenuBtn.addEventListener('click', function() {
+                mobileMenu.querySelector('div').classList.add('-translate-x-full');
+                setTimeout(() => {
+                    mobileMenu.classList.add('hidden');
+                }, 300);
+            });
+            
+            // 点击菜单外区域关闭菜单
+            mobileMenu.addEventListener('click', function(e) {
+                if (e.target === mobileMenu) {
+                    closeMobileMenuBtn.click();
+                }
+            });
+            
+            // 导航链接点击关闭菜单
+            mobileMenu.querySelectorAll('a').forEach(link => {
+                link.addEventListener('click', function() {
+                    closeMobileMenuBtn.click();
+                });
+            });
+        }
+
+        // 初始化
+        function init() {
+            initParsers();
+            initEvents();
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
